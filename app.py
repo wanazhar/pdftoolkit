@@ -2,19 +2,30 @@ from flask import Flask, request, send_file, render_template, redirect, url_for
 from pikepdf import Pdf, Encryption, Permissions, PdfError
 import io
 import zipfile
-from datetime import datetime
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 
 # ======== PDF Operations ========
 def encrypt_pdf(file_stream, password):
+    file_stream = io.BytesIO(file_stream.read())
     pdf = Pdf.open(file_stream)
     encryption = Encryption(owner=password, user=password, allow=Permissions(extract=True))
     output = io.BytesIO()
     pdf.save(output, encryption=encryption)
     output.seek(0)
     return output
+
+def decrypt_pdf(file_stream, password):
+    file_stream = io.BytesIO(file_stream.read())
+    try:
+        pdf = Pdf.open(file_stream, password=password)
+        output = io.BytesIO()
+        pdf.save(output)  # Save without encryption
+        output.seek(0)
+        return output
+    except PdfError:
+        return None  # Return None if the password is incorrect
 
 def merge_pdfs(files):
     merged = Pdf.new()
@@ -28,15 +39,23 @@ def merge_pdfs(files):
 
 def split_pdf(file_stream, ranges):
     src = Pdf.open(file_stream)
-    output = io.BytesIO()
     split = Pdf.new()
+    output = io.BytesIO()
+
+    num_pages = len(src.pages)
 
     for r in ranges.split(','):
+        r = r.strip()
         if '-' in r:
             start, end = map(int, r.split('-'))
-            split.pages.extend(src.pages[start-1:end])
+            if start < 1 or end > num_pages or start > end:
+                raise ValueError(f"Invalid page range: {r}")
+            split.pages.extend(src.pages[start - 1:end])
         else:
-            split.pages.append(src.pages[int(r)-1])
+            page_num = int(r)
+            if page_num < 1 or page_num > num_pages:
+                raise ValueError(f"Page number out of range: {page_num}")
+            split.pages.append(src.pages[page_num - 1])
 
     split.save(output)
     output.seek(0)
@@ -44,10 +63,7 @@ def split_pdf(file_stream, ranges):
 
 def compress_pdf(file_stream):
     pdf = Pdf.open(file_stream)
-
-    # Simple compression by removing duplicate objects
     pdf.remove_unreferenced_resources()
-
     output = io.BytesIO()
     pdf.save(output, compress_streams=True, object_stream_mode=2)
     output.seek(0)
@@ -82,7 +98,34 @@ def handle_encrypt():
     except Exception as e:
         return f"Unexpected error: {str(e)}", 500
 
-@app.route('/merge', methods=['POST'])  # ✅ Properly indented after previous function
+@app.route('/decrypt', methods=['POST'])
+def handle_decrypt():
+    try:
+        password = request.form['password']
+        files = request.files.getlist('pdfs')
+
+        if not files or not password:
+            return redirect(url_for('home'))
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for file in files:
+                if file.filename.lower().endswith('.pdf'):
+                    decrypted = decrypt_pdf(file.stream, password)
+                    if decrypted:
+                        zip_file.writestr(f"decrypted_{file.filename}", decrypted.read())
+                    else:
+                        return f"Failed to decrypt {file.filename}. Incorrect password?", 400
+
+        zip_buffer.seek(0)
+        return send_file(zip_buffer, download_name='decrypted_files.zip', as_attachment=True)
+
+    except PdfError as e:
+        return f"PDF Error: {str(e)}", 400
+    except Exception as e:
+        return f"Unexpected error: {str(e)}", 500
+
+@app.route('/merge', methods=['POST'])
 def handle_merge():
     try:
         files = request.files.getlist('pdfs')
