@@ -1,14 +1,16 @@
 # 📄 PDF Toolkit - Web-Based PDF Processor  
 
-A simple **Flask-based web application** that provides an easy-to-use interface for various **PDF operations**, including **encryption, decryption, merging, splitting, and compression**. 🚀  
+A simple **Flask-based web application** that provides an easy-to-use interface for **encrypting, decrypting, merging, splitting, and compressing PDFs**. 🚀  
+
+---
 
 ## ✨ Features  
 
-✔ **Encrypt PDFs** - Secure your PDFs with a password  
-✔ **Decrypt PDFs** - Remove password protection (with the correct password)  
-✔ **Merge PDFs** - Combine multiple PDFs into one  
-✔ **Split PDFs** - Extract specific pages from a PDF  
-✔ **Compress PDFs** - Reduce PDF file size while maintaining quality  
+✔ **Encrypt PDFs** - Secure your PDFs with a password 🔐  
+✔ **Decrypt PDFs** - Remove password protection (with the correct password) 🔓  
+✔ **Merge PDFs** - Combine multiple PDFs into one 📎  
+✔ **Split PDFs** - Extract specific pages from a PDF ✂️  
+✔ **Compress PDFs** - Reduce PDF file size while maintaining quality 📉  
 
 ---
 
@@ -16,11 +18,14 @@ A simple **Flask-based web application** that provides an easy-to-use interface 
 
 ```
 📁 pdf-toolkit/
-│── 📄 app.py          # Main Flask application  
-│── 📄 requirements.txt # Dependencies  
-│── 📁 templates/      # HTML frontend files  
-│── 📁 static/         # CSS, JS, and other assets  
-│── 📁 uploads/        # Temporary storage for uploaded files  
+│── 📄 app.py             # Main Flask application  
+│── 📄 requirements.txt   # Dependencies  
+│── 📁 templates/         # HTML frontend files  
+│   │── 📄 index.html     # Main UI for file upload  
+│── 📁 static/            # Static assets (CSS & JS)  
+│   │── 📄 styles.css     # CSS styles  
+│   │── 📄 scripts.js     # JavaScript functions  
+│── 📁 uploads/           # Temporary storage for uploaded files  
 ```
 
 ---
@@ -71,6 +76,25 @@ curl -X POST -F "pdfs=@file.pdf" -F "password=1234" http://127.0.0.1:5000/encryp
 
 ---
 
+## 📜 Dependencies  
+
+Make sure to install the required dependencies before running the app:  
+
+📄 **requirements.txt**  
+
+```txt
+Flask
+pikepdf
+```
+
+Install them using:  
+
+```sh
+pip install -r requirements.txt
+```
+
+---
+
 ## 🏗️ Built With  
 
 - **Flask** - Lightweight web framework  
@@ -83,6 +107,8 @@ curl -X POST -F "pdfs=@file.pdf" -F "password=1234" http://127.0.0.1:5000/encryp
 
 This project is licensed under the **MIT License**. Feel free to use and modify it as needed!  
 
-👨‍💻 **Sample**: [wanazhar on PythonAnywhere](https://wanazhar.pythonanywhere.com)  
+👨‍💻 **Author**: [wanazhar](https://github.com/wanazhar)  
+
+📄 **Sample**: [wanazhar on PythonAnywhere](https://wanazhar.pythonanywhere.com)  
 
 ---
