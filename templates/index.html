@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Toolkit</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>📄 PDF Toolkit</h1>
+        <p>Encrypt, Decrypt, Merge, Split, and Compress PDFs</p>
+
+        <div class="upload-section">
+            <form id="pdfForm" enctype="multipart/form-data">
+                <label>Select PDF(s):</label>
+                <input type="file" id="pdfInput" name="pdfs" multiple required>
+
+                <label>Password (For Encrypt/Decrypt):</label>
+                <input type="password" id="passwordInput" name="password">
+
+                <button type="button" onclick="uploadFile('/encrypt')">🔐 Encrypt</button>
+                <button type="button" onclick="uploadFile('/decrypt')">🔓 Decrypt</button>
+                <button type="button" onclick="uploadFile('/merge')">📎 Merge</button>
+                <button type="button" onclick="uploadFile('/split')">✂️ Split</button>
+                <button type="button" onclick="uploadFile('/compress')">📉 Compress</button>
+            </form>
+        </div>
+
+        <div id="status"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>
