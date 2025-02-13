@@ -41,8 +41,8 @@ Ensure you have **Python 3.7+** installed. You also need **pip** for package man
 Clone the repository and install dependencies:  
 
 ```sh
-git clone https://github.com/yourusername/pdf-toolkit.git
-cd pdf-toolkit
+git clone https://github.com/wanazhar/pdftoolkit.git
+cd pdftoolkit
 pip install -r requirements.txt
 ```
 
