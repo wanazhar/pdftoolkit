@@ -114,8 +114,62 @@
                     </div>
                 </div>
             </div>
+            <!-- Extract Text -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 card-hover shadow">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">📝</div>
+                        <h3 class="card-title">Extract Text</h3>
+                        <form action="/extract_text" method="post" enctype="multipart/form-data">
+                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
+                            <button type="submit" class="btn btn-primary">Extract Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Extract Images -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 card-hover shadow">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">🖼️</div>
+                        <h3 class="card-title">Extract Images</h3>
+                        <form action="/extract_images" method="post" enctype="multipart/form-data">
+                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
+                            <button type="submit" class="btn btn-primary">Extract Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- OCR for Scanned PDFs -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 card-hover shadow">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">🔍</div>
+                        <h3 class="card-title">OCR Scanned PDF</h3>
+                        <form action="/ocr" method="post" enctype="multipart/form-data">
+                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
+                            <button type="submit" class="btn btn-primary">Process Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Rearrange PDF Pages -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 card-hover shadow">
+                    <div class="card-body text-center">
+                        <div class="feature-icon mb-3">🔄</div>
+                        <h3 class="card-title">Rearrange Pages</h3>
+                        <form action="/rearrange" method="post" enctype="multipart/form-data">
+                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
+                            <input type="text" class="form-control mb-3" name="order" placeholder="New order e.g., 3,1,2" required>
+                            <button type="submit" class="btn btn-primary">Rearrange Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+
     <footer class="mt-5 py-4 bg-dark text-white">
         <div class="container text-center">
             <p class="mb-0">Made with ❤️ by wanazhar | Powered by DeepThink R1 and GPT-4o</p>
