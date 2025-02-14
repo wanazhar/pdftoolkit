@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /encrypt
+Disallow: /decrypt
+Disallow: /merge
+Disallow: /split
+Disallow: /compress
+Disallow: /extract_text
+Disallow: /extract_images
+Disallow: /ocr
+Disallow: /rearrange
+
+Allow: / 

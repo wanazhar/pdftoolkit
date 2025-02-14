@@ -7,9 +7,34 @@ from PIL import Image
 import fitz  # PyMuPDF
 import os
 import tempfile
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import logging
+from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
+app.config['UPLOAD_EXTENSIONS'] = ['.pdf']
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+
+# Rate limiting
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
+
+# Setup logging
+if not os.path.exists('logs'):
+    os.mkdir('logs')
+file_handler = RotatingFileHandler('logs/pdftoolkit.log', maxBytes=10240, backupCount=10)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+file_handler.setLevel(logging.INFO)
+app.logger.addHandler(file_handler)
+app.logger.setLevel(logging.INFO)
+app.logger.info('PDFToolkit startup')
 
 # ======== PDF Operations ========
 def encrypt_pdf(file_stream, password):
@@ -187,11 +212,13 @@ def ocr_pdf(file_stream):
             text = pytesseract.image_to_string(img)
             
             # Create new PDF page with OCR text
-            pdf_page = Pdf.new()
-            pdf_page.add_blank_page()
-            # Add text to page (simplified - you might want to preserve layout)
+            new_page = Pdf.new()
+            new_page.add_blank_page(page_size=(pix.width, pix.height))
+            # TODO: Add proper text positioning and formatting
+            # For now, just adding raw text
+            # You may want to use reportlab or similar to format text properly
             
-            pdf_writer.pages.extend(pdf_page.pages)
+            pdf_writer.pages.extend(new_page.pages)
     
     doc.close()
     pdf_writer.save(output_pdf)
@@ -231,13 +258,31 @@ def home():
     return render_template('index.html')
 
 @app.route('/encrypt', methods=['POST'])
+@limiter.limit("10 per minute")
 def handle_encrypt():
     try:
-        password = request.form['password']
-        files = request.files.getlist('pdfs')
+        if 'pdfs' not in request.files:
+            app.logger.warning('No file part in request')
+            return "No file part", 400
+            
+        password = request.form.get('password')
+        if not password:
+            app.logger.warning('No password provided')
+            return "Password is required", 400
 
-        if not files or not password:
-            return redirect(url_for('home'))
+        files = request.files.getlist('pdfs')
+        
+        # Validate files
+        for file in files:
+            if file.filename == '':
+                app.logger.warning('No selected file')
+                return "No selected file", 400
+            if not allowed_file(file.filename):
+                app.logger.warning(f'Invalid file type: {file.filename}')
+                return "Invalid file type", 400
+            if not validate_file_size(file.stream):
+                app.logger.warning(f'File too large: {file.filename}')
+                return "File too large", 400
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
@@ -247,11 +292,14 @@ def handle_encrypt():
                     zip_file.writestr(f"encrypted_{file.filename}", encrypted.read())
 
         zip_buffer.seek(0)
+        app.logger.info(f'Successfully encrypted {len(files)} files')
         return send_file(zip_buffer, download_name='encrypted_files.zip', as_attachment=True)
 
     except PdfError as e:
+        app.logger.error(f'PDF Error: {str(e)}')
         return f"PDF Error: {str(e)}", 400
     except Exception as e:
+        app.logger.error(f'Unexpected error: {str(e)}')
         return f"Unexpected error: {str(e)}", 500
 
 @app.route('/decrypt', methods=['POST'])
@@ -399,6 +447,17 @@ def handle_rearrange():
         return f"Invalid input: {str(e)}", 400
     except Exception as e:
         return f"Rearrangement failed: {str(e)}", 500
+
+# ======== Helper Functions ========
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ['pdf']
+
+def validate_file_size(file_stream):
+    file_stream.seek(0, os.SEEK_END)
+    size = file_stream.tell()
+    file_stream.seek(0)
+    return size <= app.config['MAX_CONTENT_LENGTH']
 
 if __name__ == '__main__':
     app.run(debug=True)
