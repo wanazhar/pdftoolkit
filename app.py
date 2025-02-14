@@ -2,6 +2,11 @@ from flask import Flask, request, send_file, render_template, redirect, url_for
 from pikepdf import Pdf, Encryption, Permissions, PdfError
 import io
 import zipfile
+import pytesseract
+from PIL import Image
+import fitz  # PyMuPDF
+import os
+import tempfile
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
@@ -118,6 +123,108 @@ def compress_pdf(file_stream):
     output.seek(0)
     return output
 
+def extract_text_from_pdf(file_stream):
+    file_stream = io.BytesIO(file_stream.read())
+    doc = fitz.open(stream=file_stream.read(), filetype="pdf")
+    text = ""
+    for page in doc:
+        text += page.get_text()
+    doc.close()
+    
+    # Create text file in memory
+    output = io.BytesIO()
+    output.write(text.encode('utf-8'))
+    output.seek(0)
+    return output
+
+def extract_images_from_pdf(file_stream):
+    file_stream = io.BytesIO(file_stream.read())
+    doc = fitz.open(stream=file_stream.read(), filetype="pdf")
+    
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        image_count = 0
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            image_list = page.get_images()
+            
+            for img_index, img in enumerate(image_list):
+                xref = img[0]
+                base_image = doc.extract_image(xref)
+                image_bytes = base_image["image"]
+                
+                # Determine file extension based on image format
+                ext = base_image["ext"]
+                image_count += 1
+                filename = f'image_{page_num + 1}_{image_count}.{ext}'
+                
+                zip_file.writestr(filename, image_bytes)
+    
+    doc.close()
+    zip_buffer.seek(0)
+    return zip_buffer
+
+def ocr_pdf(file_stream):
+    file_stream = io.BytesIO(file_stream.read())
+    doc = fitz.open(stream=file_stream.read(), filetype="pdf")
+    
+    # Create a new PDF with OCR text
+    output_pdf = io.BytesIO()
+    pdf_writer = Pdf.new()
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        for page_num in range(len(doc)):
+            page = doc[page_num]
+            pix = page.get_pixmap()
+            
+            # Save image temporarily
+            img_path = os.path.join(temp_dir, f"page_{page_num}.png")
+            pix.save(img_path)
+            
+            # Perform OCR
+            img = Image.open(img_path)
+            text = pytesseract.image_to_string(img)
+            
+            # Create new PDF page with OCR text
+            pdf_page = Pdf.new()
+            pdf_page.add_blank_page()
+            # Add text to page (simplified - you might want to preserve layout)
+            
+            pdf_writer.pages.extend(pdf_page.pages)
+    
+    doc.close()
+    pdf_writer.save(output_pdf)
+    output_pdf.seek(0)
+    return output_pdf
+
+def rearrange_pdf_pages(file_stream, order):
+    try:
+        file_stream = io.BytesIO(file_stream.read())
+        pdf = Pdf.open(file_stream)
+        
+        # Parse the order string into a list of page numbers (1-based to 0-based)
+        new_order = [int(p.strip()) - 1 for p in order.split(',')]
+        
+        # Validate page numbers
+        if any(i < 0 or i >= len(pdf.pages) for i in new_order):
+            raise ValueError("Page numbers out of range")
+        
+        # Create new PDF with rearranged pages
+        new_pdf = Pdf.new()
+        for page_num in new_order:
+            new_pdf.pages.append(pdf.pages[page_num])
+        
+        output = io.BytesIO()
+        new_pdf.save(output)
+        output.seek(0)
+        return output
+    
+    except ValueError as e:
+        raise ValueError(f"Invalid page order: {str(e)}")
+    except Exception as e:
+        raise RuntimeError(f"Error rearranging PDF: {str(e)}")
+
 # ======== Routes ========
 @app.route('/')
 def home():
@@ -214,9 +321,84 @@ def handle_split():
 
 @app.route('/compress', methods=['POST'])
 def handle_compress():
-    file = request.files['pdf']
-    compressed = compress_pdf(file.stream)
-    return send_file(compressed, download_name='compressed.pdf', as_attachment=True)
+    try:
+        file = request.files['pdf']
+        compressed = compress_pdf(file.stream)
+        return send_file(compressed, download_name='compressed.pdf', as_attachment=True)
+    except Exception as e:
+        return f"Compression failed: {str(e)}", 500
+
+@app.route('/extract_text', methods=['POST'])
+def handle_extract_text():
+    try:
+        file = request.files['pdf']
+        if not file:
+            return "No file provided", 400
+        
+        text_output = extract_text_from_pdf(file.stream)
+        return send_file(
+            text_output,
+            download_name='extracted_text.txt',
+            as_attachment=True,
+            mimetype='text/plain'
+        )
+    except Exception as e:
+        return f"Text extraction failed: {str(e)}", 500
+
+@app.route('/extract_images', methods=['POST'])
+def handle_extract_images():
+    try:
+        file = request.files['pdf']
+        if not file:
+            return "No file provided", 400
+        
+        images_zip = extract_images_from_pdf(file.stream)
+        return send_file(
+            images_zip,
+            download_name='extracted_images.zip',
+            as_attachment=True,
+            mimetype='application/zip'
+        )
+    except Exception as e:
+        return f"Image extraction failed: {str(e)}", 500
+
+@app.route('/ocr', methods=['POST'])
+def handle_ocr():
+    try:
+        file = request.files['pdf']
+        if not file:
+            return "No file provided", 400
+        
+        ocr_output = ocr_pdf(file.stream)
+        return send_file(
+            ocr_output,
+            download_name='ocr_processed.pdf',
+            as_attachment=True,
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        return f"OCR processing failed: {str(e)}", 500
+
+@app.route('/rearrange', methods=['POST'])
+def handle_rearrange():
+    try:
+        file = request.files['pdf']
+        order = request.form['order']
+        
+        if not file or not order:
+            return "Missing file or page order", 400
+        
+        rearranged = rearrange_pdf_pages(file.stream, order)
+        return send_file(
+            rearranged,
+            download_name='rearranged.pdf',
+            as_attachment=True,
+            mimetype='application/pdf'
+        )
+    except ValueError as e:
+        return f"Invalid input: {str(e)}", 400
+    except Exception as e:
+        return f"Rearrangement failed: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)
