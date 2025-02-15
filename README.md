@@ -36,6 +36,23 @@ A secure and feature-rich **Flask-based web application** that provides an easy-
 - pip (Python package manager)
 - tesseract-ocr (for OCR functionality)
 
+### Project Structure
+```
+/your-project-root/
+    ├── flask_app.py          # Main application file
+    ├── static/
+    │   ├── css/
+    │   │   └── styles.css
+    │   ├── js/
+    │   │   └── script.js
+    │   └── robots.txt
+    ├── templates/
+    │   └── index.html
+    ├── logs/                 # Created automatically
+    │   └── pdftoolkit.log
+    └── requirements.txt
+```
+
 ### Installation
 
 1. Clone the repository:
@@ -69,16 +86,30 @@ DEBUG=False
 MAX_CONTENT_LENGTH=104857600  # 100MB in bytes
 ```
 
-### Running the Application
+### PythonAnywhere Deployment
+
+1. Upload your files to PythonAnywhere
+2. Configure your web app:
+   - Working directory: `/home/yourusername/mysite`
+   - WSGI configuration file: Update paths in the WSGI file
+   - Static files:
+     ```
+     URL: /static/
+     Directory: /home/yourusername/mysite/static
+     ```
+
+3. Install requirements:
+```sh
+pip3 install --user -r requirements.txt
+```
+
+4. Reload your web app
+
+### Running Locally
 
 Development server:
 ```sh
-python app.py
-```
-
-Production server (using gunicorn):
-```sh
-gunicorn app:app
+python flask_app.py
 ```
 
 Visit `http://127.0.0.1:5000` in your browser.
@@ -97,25 +128,6 @@ Visit `http://127.0.0.1:5000` in your browser.
 | `POST` | `/ocr` | Process scanned PDFs with OCR | 5/minute |
 | `POST` | `/rearrange` | Reorder PDF pages | 10/minute |
 
-## 🧪 Testing
-
-Run the test suite:
-```sh
-python -m pytest
-```
-
-## 📦 Dependencies
-
-Key dependencies (see `requirements.txt` for full list):
-- Flask==2.0.1
-- pikepdf==5.1.0
-- PyMuPDF==1.19.1
-- Pillow==9.0.0
-- pytesseract==0.3.8
-- Flask-Limiter==2.4.0
-- pytest==7.0.0
-- gunicorn==20.1.0
-
 ## 🔒 Security
 
 - All file processing is done in memory
@@ -123,14 +135,6 @@ Key dependencies (see `requirements.txt` for full list):
 - Input validation on both client and server side
 - Rate limiting to prevent abuse
 - File type and size restrictions
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## 📝 License
 
