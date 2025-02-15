@@ -150,4 +150,4 @@ Try it out: [PDFToolkit on PythonAnywhere](https://wanazhar.pythonanywhere.com)
 
 ---
 
-Made with ❤️ by wanazhar
+<p align="center">Made with ❤️ by <a href="https://github.com/wanazhar">wanazhar</a></p>
