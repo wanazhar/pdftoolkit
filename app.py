@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file, render_template, redirect, url_for
+from flask import Flask, request, send_file, render_template, redirect, url_for, send_from_directory
 from pikepdf import Pdf, Encryption, Permissions, PdfError
 import io
 import zipfile
@@ -447,6 +447,10 @@ def handle_rearrange():
         return f"Invalid input: {str(e)}", 400
     except Exception as e:
         return f"Rearrangement failed: {str(e)}", 500
+
+@app.route('/robots.txt')
+def robots():
+    return send_from_directory('static', 'robots.txt')
 
 # ======== Helper Functions ========
 def allowed_file(filename):

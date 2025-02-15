@@ -1,0 +1,1 @@
+/* Move script.js to static/js/ directory */ 
