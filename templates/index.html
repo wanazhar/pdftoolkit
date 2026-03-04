@@ -3,166 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>idontlikePDF ♥</title>
+    <title>idontlikePDF ♥ - Modern PDF Productivity</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9042571862718991"
-        crossorigin="anonymous"></script>
-    <style>
-        .card-hover:hover {
-            transform: translateY(-5px);
-            transition: all 0.3s ease;
-        }
-        .feature-icon {
-            font-size: 2.5rem;
-            color: #0d6efd;
-        }
-    </style>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary mb-5">
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand" href="/">
-                <h1>📄 idontlikePDF ❤️</h1>
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="fas fa-file-pdf fa-2x me-2 text-primary"></i>
+                <span class="fw-bold tracking-tight">idontlikePDF ❤️</span>
             </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#tools">Tools</a></li>
+                    <li class="nav-item"><a class="nav-link" href="https://github.com/wanazhar/pdftoolkit" target="_blank">GitHub</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <div class="container">
+    <header class="hero-section text-white text-center py-5 mb-5 bg-primary">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">Modern PDF Management</h1>
+            <p class="lead mb-4">Fast, Secure, and Entirely in Your Browser.</p>
+            <a href="#tools" class="btn btn-light btn-lg px-5 rounded-pill shadow-sm">Explore Tools</a>
+        </div>
+    </header>
+
+    <div class="container mb-5" id="tools">
         <div class="row g-4">
-            <!-- Encrypt Card -->
+            <!-- Encrypt -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">🔒</div>
-                        <h3 class="card-title">Encrypt PDF</h3>
-                        <form action="/encrypt" method="post" enctype="multipart/form-data">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-primary-soft text-primary mb-3">
+                            <i class="fas fa-lock fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Encrypt PDF</h3>
+                        <form id="encryptForm" action="/encrypt" method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <input type="password" class="form-control" name="password" placeholder="Password" required>
+                                <input type="password" class="form-control rounded-pill" name="password" placeholder="Set Password" required>
                             </div>
                             <div class="mb-3">
-                                <input class="form-control" type="file" name="pdfs" multiple accept=".pdf" required>
+                                <input class="form-control form-control-sm" type="file" name="pdfs" multiple accept=".pdf" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Encrypt Now</button>
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill">Encrypt Now</button>
                         </form>
                     </div>
                 </div>
             </div>
-            <!-- Decrypt Card -->
+
+            <!-- Decrypt -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">🔓</div>
-                        <h3 class="card-title">Decrypt PDF</h3>
-                        <form action="/decrypt" method="post" enctype="multipart/form-data">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-success-soft text-success mb-3">
+                            <i class="fas fa-unlock fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Decrypt PDF</h3>
+                        <form id="decryptForm" action="/decrypt" method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <input type="password" class="form-control" name="password" placeholder="Password" required>
+                                <input type="password" class="form-control rounded-pill" name="password" placeholder="Enter Password" required>
                             </div>
                             <div class="mb-3">
-                                <input class="form-control" type="file" name="pdfs" multiple accept=".pdf" required>
+                                <input class="form-control form-control-sm" type="file" name="pdfs" multiple accept=".pdf" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Decrypt Now</button>
+                            <button type="submit" class="btn btn-success w-100 rounded-pill">Decrypt Now</button>
                         </form>
                     </div>
                 </div>
             </div>
-            <!-- Merge Card -->
+
+            <!-- Merge -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">🧩</div>
-                        <h3 class="card-title">Merge PDFs</h3>
-                        <form action="/merge" method="post" enctype="multipart/form-data">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-info-soft text-info mb-3">
+                            <i class="fas fa-layer-group fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Merge PDFs</h3>
+                        <form id="mergeForm" action="/merge" method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <input class="form-control" type="file" name="pdfs" multiple accept=".pdf" required>
+                                <input class="form-control form-control-sm" type="file" name="pdfs" multiple accept=".pdf" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Merge Now</button>
+                            <button type="submit" class="btn btn-info text-white w-100 rounded-pill">Merge Now</button>
                         </form>
                     </div>
                 </div>
             </div>
-            <!-- Split Card -->
+
+            <!-- Split -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">✂️</div>
-                        <h3 class="card-title">Split PDF</h3>
-                        <form action="/split" method="post" enctype="multipart/form-data">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-warning-soft text-warning mb-3">
+                            <i class="fas fa-scissors fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Split PDF</h3>
+                        <form id="splitForm" action="/split" method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <input class="form-control" type="file" name="pdf" accept=".pdf" required>
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
                             </div>
                             <div class="mb-3">
-                                <input type="text" class="form-control" name="pages"
-                                       placeholder="Ranges (e.g., 1-3,5,7-9 or every 2 pages)" required>
+                                <input type="text" class="form-control rounded-pill" name="pages" placeholder="e.g. 1-3, 5" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Split Now</button>
+                            <button type="submit" class="btn btn-warning text-white w-100 rounded-pill">Split Now</button>
                         </form>
                     </div>
                 </div>
             </div>
-            <!-- Compress Card -->
+
+            <!-- Compress -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">📉</div>
-                        <h3 class="card-title">Compress PDF</h3>
-                        <form action="/compress" method="post" enctype="multipart/form-data">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-danger-soft text-danger mb-3">
+                            <i class="fas fa-compress-arrows-alt fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Compress PDF</h3>
+                        <form id="compressForm" action="/compress" method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <input class="form-control" type="file" name="pdf" accept=".pdf" required>
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
                             </div>
-                            <button type="submit" class="btn btn-primary">Compress Now</button>
+                            <button type="submit" class="btn btn-danger w-100 rounded-pill">Compress Now</button>
                         </form>
                     </div>
                 </div>
             </div>
+
+            <!-- Rotate -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-secondary-soft text-secondary mb-3">
+                            <i class="fas fa-redo fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Rotate PDF</h3>
+                        <form id="rotateForm" action="/rotate" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
+                            </div>
+                            <div class="mb-3">
+                                <select class="form-select rounded-pill" name="degree">
+                                    <option value="90">90° Clockwise</option>
+                                    <option value="180">180°</option>
+                                    <option value="270">90° Counter-Clockwise</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-secondary w-100 rounded-pill">Rotate Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Watermark -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-primary-soft text-primary mb-3">
+                            <i class="fas fa-stamp fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Add Watermark</h3>
+                        <form id="watermarkForm" action="/watermark" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input type="text" class="form-control rounded-pill" name="text" placeholder="Watermark Text" required>
+                            </div>
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 rounded-pill">Add Watermark</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF to Images -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-dark-soft text-dark mb-3">
+                            <i class="fas fa-file-image fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">PDF to Images</h3>
+                        <form id="pdfToImagesForm" action="/pdf_to_images" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
+                            </div>
+                            <button type="submit" class="btn btn-dark w-100 rounded-pill">Convert Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Images to PDF -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-purple-soft text-purple mb-3">
+                            <i class="fas fa-images fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Images to PDF</h3>
+                        <form id="imagesToPdfForm" action="/images_to_pdf" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="images" multiple accept="image/*" required>
+                            </div>
+                            <button type="submit" class="btn btn-purple text-white w-100 rounded-pill">Create PDF</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rearrange -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-teal-soft text-teal mb-3">
+                            <i class="fas fa-sort-numeric-down fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Rearrange Pages</h3>
+                        <form id="rearrangeForm" action="/rearrange" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" class="form-control rounded-pill" name="order" placeholder="Order (e.g. 3,1,2)" required>
+                            </div>
+                            <button type="submit" class="btn btn-teal text-white w-100 rounded-pill">Rearrange Now</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Extract Text -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">📝</div>
-                        <h3 class="card-title">Extract Text</h3>
-                        <form action="/extract_text" method="post" enctype="multipart/form-data">
-                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
-                            <button type="submit" class="btn btn-primary">Extract Now</button>
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-indigo-soft text-indigo mb-3">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">Extract Text</h3>
+                        <form id="extractTextForm" action="/extract_text" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
+                            </div>
+                            <button type="submit" class="btn btn-indigo text-white w-100 rounded-pill">Extract Now</button>
                         </form>
                     </div>
                 </div>
             </div>
-            <!-- Extract Images -->
+
+            <!-- OCR -->
             <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">🖼️</div>
-                        <h3 class="card-title">Extract Images</h3>
-                        <form action="/extract_images" method="post" enctype="multipart/form-data">
-                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
-                            <button type="submit" class="btn btn-primary">Extract Now</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <!-- OCR for Scanned PDFs -->
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">🔍</div>
-                        <h3 class="card-title">OCR Scanned PDF</h3>
-                        <form action="/ocr" method="post" enctype="multipart/form-data">
-                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
-                            <button type="submit" class="btn btn-primary">Process Now</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <!-- Rearrange PDF Pages -->
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 card-hover shadow">
-                    <div class="card-body text-center">
-                        <div class="feature-icon mb-3">🔄</div>
-                        <h3 class="card-title">Rearrange Pages</h3>
-                        <form action="/rearrange" method="post" enctype="multipart/form-data">
-                            <input class="form-control mb-3" type="file" name="pdf" accept=".pdf" required>
-                            <input type="text" class="form-control mb-3" name="order" placeholder="New order e.g., 3,1,2" required>
-                            <button type="submit" class="btn btn-primary">Rearrange Now</button>
+                <div class="card h-100 tool-card border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-blue-soft text-blue mb-3">
+                            <i class="fas fa-search fa-2x"></i>
+                        </div>
+                        <h3 class="card-title h5 fw-bold mb-3">OCR Scanned PDF</h3>
+                        <form id="ocrForm" action="/ocr" method="post" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <input class="form-control form-control-sm" type="file" name="pdf" accept=".pdf" required>
+                            </div>
+                            <button type="submit" class="btn btn-blue text-white w-100 rounded-pill">Process Now</button>
                         </form>
                     </div>
                 </div>
@@ -170,13 +282,25 @@
         </div>
     </div>
 
-    <footer class="mt-5 py-4 bg-dark text-white">
+    <footer class="bg-dark text-white py-5 mt-5">
         <div class="container text-center">
-            <p class="mb-0">Made with ❤️ by wanazhar</p>
-            <small>All processing happens in memory. No files are stored on the server.</small>
-            <small> | Source code: <a href="https://github.com/wanazhar/pdftoolkit" class="text-white">GitHub</a></small>
+            <div class="mb-4">
+                <a href="/" class="text-white text-decoration-none h4 fw-bold">idontlikePDF ❤️</a>
+            </div>
+            <p class="mb-2 text-secondary">Advanced PDF operations made simple.</p>
+            <p class="mb-4 text-secondary small">All processing occurs in memory. Your files are never stored.</p>
+            <div class="social-links mb-4">
+                <a href="https://github.com/wanazhar/pdftoolkit" class="text-white mx-2"><i class="fab fa-github fa-lg"></i></a>
+            </div>
+            <div class="text-secondary small">
+                &copy; 2024 idontlikePDF. Made with <i class="fas fa-heart text-danger"></i> for productivity.
+            </div>
         </div>
     </footer>
+
+    <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

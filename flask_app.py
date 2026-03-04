@@ -265,6 +265,83 @@ def rearrange_pdf_pages(file_stream, order):
         raise RuntimeError(f"Error rearranging PDF: {str(e)}")
 
 
+def rotate_pdf(file_stream, degree):
+    try:
+        file_bytes = _read_all_bytes(file_stream)
+        pdf = Pdf.open(io.BytesIO(file_bytes))
+        for page in pdf.pages:
+            page.rotate(degree, relative=True)
+        output = io.BytesIO()
+        pdf.save(output)
+        output.seek(0)
+        return output
+    except Exception as e:
+        raise RuntimeError(f"Rotation failed: {str(e)}")
+
+
+def pdf_to_images(file_stream):
+    try:
+        file_bytes = _read_all_bytes(file_stream)
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                pix = page.get_pixmap()
+                img_bytes = pix.tobytes("png")
+                zip_file.writestr(f"page_{page_num + 1}.png", img_bytes)
+        doc.close()
+        zip_buffer.seek(0)
+        return zip_buffer
+    except Exception as e:
+        raise RuntimeError(f"Conversion failed: {str(e)}")
+
+
+def images_to_pdf(image_files):
+    try:
+        doc = fitz.open()
+        for img_file in image_files:
+            img_bytes = img_file.read()
+            img = fitz.open(stream=img_bytes, filetype=img_file.filename.split('.')[-1])
+            rect = img[0].rect
+            pdfbytes = img.convert_to_pdf()
+            img.close()
+            img_pdf = fitz.open("pdf", pdfbytes)
+            page = doc.new_page(width=rect.width, height=rect.height)
+            page.show_pdf_page(rect, img_pdf, 0)
+            img_pdf.close()
+        output = io.BytesIO()
+        doc.save(output)
+        doc.close()
+        output.seek(0)
+        return output
+    except Exception as e:
+        raise RuntimeError(f"Conversion failed: {str(e)}")
+
+
+def add_watermark(file_stream, watermark_text):
+    try:
+        file_bytes = _read_all_bytes(file_stream)
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        for page in doc:
+            # Add watermark text diagonally
+            page.insert_text(
+                (50, 50),
+                watermark_text,
+                fontsize=50,
+                color=(0.8, 0.8, 0.8),
+                fill_opacity=0.3,
+                rotate=45
+            )
+        output = io.BytesIO()
+        doc.save(output)
+        doc.close()
+        output.seek(0)
+        return output
+    except Exception as e:
+        raise RuntimeError(f"Watermarking failed: {str(e)}")
+
+
 # ======== Routes ========
 @app.route("/")
 def home():
@@ -274,18 +351,29 @@ def home():
 @app.route("/encrypt", methods=["POST"])
 def handle_encrypt():
     try:
-        password = request.form["password"]
+        password = request.form.get("password")
         files = request.files.getlist("pdfs")
 
-        if not files or not password:
-            return redirect(url_for("home"))
+        if not files or not any(f.filename for f in files):
+            return "No files uploaded", 400
+        if not password:
+            return "Password is required", 400
 
         zip_buffer = io.BytesIO()
+        pdf_count = 0
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             for file in files:
+                if not file.filename:
+                    continue
                 if file.filename.lower().endswith(".pdf"):
                     encrypted = encrypt_pdf(file.stream, password)
                     zip_file.writestr(f"encrypted_{file.filename}", encrypted.read())
+                    pdf_count += 1
+                else:
+                    return f"Invalid file type: {file.filename}. Only PDFs are allowed.", 400
+
+        if pdf_count == 0:
+            return "No valid PDF files found", 400
 
         zip_buffer.seek(0)
         return send_file(zip_buffer, download_name="encrypted_files.zip", as_attachment=True)
@@ -299,21 +387,32 @@ def handle_encrypt():
 @app.route("/decrypt", methods=["POST"])
 def handle_decrypt():
     try:
-        password = request.form["password"]
+        password = request.form.get("password")
         files = request.files.getlist("pdfs")
 
-        if not files or not password:
-            return redirect(url_for("home"))
+        if not files or not any(f.filename for f in files):
+            return "No files uploaded", 400
+        if not password:
+            return "Password is required", 400
 
         zip_buffer = io.BytesIO()
+        pdf_count = 0
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             for file in files:
+                if not file.filename:
+                    continue
                 if file.filename.lower().endswith(".pdf"):
                     try:
                         decrypted = decrypt_pdf(file.stream, password)
                         zip_file.writestr(f"decrypted_{file.filename}", decrypted.read())
+                        pdf_count += 1
                     except PdfError as e:
                         zip_file.writestr(f"error_{file.filename}.txt", str(e))
+                else:
+                    return f"Invalid file type: {file.filename}. Only PDFs are allowed.", 400
+
+        if pdf_count == 0:
+            return "No valid PDF files found", 400
 
         zip_buffer.seek(0)
         return send_file(zip_buffer, download_name="decrypted_files.zip", as_attachment=True)
@@ -328,10 +427,14 @@ def handle_decrypt():
 def handle_merge():
     try:
         files = request.files.getlist("pdfs")
-        if len(files) < 2:
+        if not files or not any(f.filename for f in files):
+            return "No files uploaded", 400
+
+        valid_files = [f for f in files if f.filename and f.filename.lower().endswith(".pdf")]
+        if len(valid_files) < 2:
             return "Please upload at least 2 PDF files to merge", 400
 
-        merged = merge_pdfs(files)
+        merged = merge_pdfs(valid_files)
         return send_file(merged, download_name="merged.pdf", as_attachment=True)
 
     except PdfError as e:
@@ -346,8 +449,12 @@ def handle_split():
         file = request.files.get("pdf")
         ranges = request.form.get("pages")
 
-        if not file or not ranges:
-            return "Missing file or page ranges", 400
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not file.filename.lower().endswith(".pdf"):
+            return "Invalid file type. Only PDFs are allowed.", 400
+        if not ranges:
+            return "Missing page ranges", 400
 
         buf, download_name, mimetype = split_pdf(file.stream, ranges)
         return send_file(buf, download_name=download_name, as_attachment=True, mimetype=mimetype)
@@ -363,7 +470,12 @@ def handle_split():
 @app.route("/compress", methods=["POST"])
 def handle_compress():
     try:
-        file = request.files["pdf"]
+        file = request.files.get("pdf")
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not file.filename.lower().endswith(".pdf"):
+            return "Invalid file type. Only PDFs are allowed.", 400
+
         compressed = compress_pdf(file.stream)
         return send_file(compressed, download_name="compressed.pdf", as_attachment=True)
     except Exception as e:
@@ -373,9 +485,11 @@ def handle_compress():
 @app.route("/extract_text", methods=["POST"])
 def handle_extract_text():
     try:
-        file = request.files["pdf"]
-        if not file:
-            return "No file provided", 400
+        file = request.files.get("pdf")
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not file.filename.lower().endswith(".pdf"):
+            return "Invalid file type. Only PDFs are allowed.", 400
 
         text_output = extract_text_from_pdf(file.stream)
         return send_file(
@@ -391,9 +505,11 @@ def handle_extract_text():
 @app.route("/extract_images", methods=["POST"])
 def handle_extract_images():
     try:
-        file = request.files["pdf"]
-        if not file:
-            return "No file provided", 400
+        file = request.files.get("pdf")
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not file.filename.lower().endswith(".pdf"):
+            return "Invalid file type. Only PDFs are allowed.", 400
 
         images_zip = extract_images_from_pdf(file.stream)
         return send_file(
@@ -409,9 +525,11 @@ def handle_extract_images():
 @app.route("/ocr", methods=["POST"])
 def handle_ocr():
     try:
-        file = request.files["pdf"]
-        if not file:
-            return "No file provided", 400
+        file = request.files.get("pdf")
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not file.filename.lower().endswith(".pdf"):
+            return "Invalid file type. Only PDFs are allowed.", 400
 
         ocr_output = ocr_pdf(file.stream)
         return send_file(
@@ -427,11 +545,15 @@ def handle_ocr():
 @app.route("/rearrange", methods=["POST"])
 def handle_rearrange():
     try:
-        file = request.files["pdf"]
-        order = request.form["order"]
+        file = request.files.get("pdf")
+        order = request.form.get("order")
 
-        if not file or not order:
-            return "Missing file or page order", 400
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not file.filename.lower().endswith(".pdf"):
+            return "Invalid file type. Only PDFs are allowed.", 400
+        if not order:
+            return "Missing page order", 400
 
         rearranged = rearrange_pdf_pages(file.stream, order)
         return send_file(rearranged, download_name="rearranged.pdf", as_attachment=True, mimetype="application/pdf")
@@ -440,6 +562,60 @@ def handle_rearrange():
         return f"Invalid input: {str(e)}", 400
     except Exception as e:
         return f"Rearrangement failed: {str(e)}", 500
+
+
+@app.route("/rotate", methods=["POST"])
+def handle_rotate():
+    try:
+        file = request.files.get("pdf")
+        degree = request.form.get("degree", type=int)
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not degree:
+            return "Rotation degree required", 400
+        rotated = rotate_pdf(file.stream, degree)
+        return send_file(rotated, download_name="rotated.pdf", as_attachment=True)
+    except Exception as e:
+        return f"Rotation failed: {str(e)}", 500
+
+
+@app.route("/pdf_to_images", methods=["POST"])
+def handle_pdf_to_images():
+    try:
+        file = request.files.get("pdf")
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        images_zip = pdf_to_images(file.stream)
+        return send_file(images_zip, download_name="pdf_images.zip", as_attachment=True)
+    except Exception as e:
+        return f"Conversion failed: {str(e)}", 500
+
+
+@app.route("/images_to_pdf", methods=["POST"])
+def handle_images_to_pdf():
+    try:
+        files = request.files.getlist("images")
+        if not files or not any(f.filename for f in files):
+            return "No images uploaded", 400
+        pdf_output = images_to_pdf(files)
+        return send_file(pdf_output, download_name="images_to.pdf", as_attachment=True)
+    except Exception as e:
+        return f"Conversion failed: {str(e)}", 500
+
+
+@app.route("/watermark", methods=["POST"])
+def handle_watermark():
+    try:
+        file = request.files.get("pdf")
+        text = request.form.get("text")
+        if not file or not file.filename:
+            return "No file uploaded", 400
+        if not text:
+            return "Watermark text required", 400
+        watermarked = add_watermark(file.stream, text)
+        return send_file(watermarked, download_name="watermarked.pdf", as_attachment=True)
+    except Exception as e:
+        return f"Watermarking failed: {str(e)}", 500
 
 
 if __name__ == "__main__":
